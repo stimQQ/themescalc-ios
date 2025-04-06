@@ -53,26 +53,47 @@ struct CalculatorView: View {
     // 结果显示区域
     private var resultDisplayView: some View {
         VStack(spacing: 0) {
-            ZStack {
+            ZStack(alignment: .trailing) {
                 // 结果背景
                 resultBackground
                 
-                // 结果文本
-                Text(viewModel.displayValue)
-                    .font(.system(size: resultFontSize))
-                    .fontWeight(.medium)
-                    .foregroundColor(resultTextColor)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 16)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
+                // 结果内容
+                VStack(alignment: .trailing, spacing: 4) {
+                    // 公式历史记录
+                    if !viewModel.formulaHistory.isEmpty {
+                        Text(viewModel.formulaHistory)
+                            .font(.system(size: resultFontSize * 0.5))
+                            .foregroundColor(resultTextColor.opacity(0.7))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                    }
+                    
+                    // 当前输入公式
+                    if !viewModel.inputFormula.isEmpty {
+                        Text(viewModel.inputFormula)
+                            .font(.system(size: resultFontSize * 0.7))
+                            .foregroundColor(resultTextColor.opacity(0.9))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                    }
+                    
+                    // 显示结果
+                    Text(viewModel.displayValue)
+                        .font(.system(size: resultFontSize))
+                        .fontWeight(.medium)
+                        .foregroundColor(resultTextColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 10)
             }
             .frame(minWidth: 0, maxWidth: .infinity)
             .fixedSize(horizontal: false, vertical: true)
         }
         .frame(width: UIScreen.main.bounds.width - 40) // 确保宽度为屏幕宽度减去左右各20pt的边距
         .padding(.vertical, 5)
+        .padding(.bottom, viewModel.isInScientificMode ? 20 : 10) // 科学计算器模式使用20pt间距，基础计算器模式使用10pt间距（减半）
     }
     
     // 结果背景

@@ -12,6 +12,8 @@ class CalculatorViewModel: ObservableObject {
     
     // 计算器状态
     @Published var displayValue: String = "0"
+    @Published var inputFormula: String = "" // 实时显示用户输入的公式
+    @Published var formulaHistory: String = "" // 显示完整的计算公式历史
     @Published var currentMode: CalculatorMode = .basic
     @Published var isInScientificMode: Bool = false
     @Published var calculationHistory: [CalculationHistoryItem] = []
@@ -25,7 +27,7 @@ class CalculatorViewModel: ObservableObject {
     private(set) var lastResult: Double?
     
     // 科学计算器状态
-    @Published var isInRadianMode: Bool = true
+    @Published var isInRadianMode: Bool = false // 默认使用角度制而非弧度制
     private var memoryValue: Double = 0
     
     init() {
@@ -54,11 +56,25 @@ class CalculatorViewModel: ObservableObject {
     func handleNumberInput(_ number: String) {
         if isStartingNewInput {
             displayValue = number
+            // 如果是新输入，判断是否已有操作符
+            if let firstOperand = firstOperand, let operation = currentOperation {
+                // 如果已有操作符，则在公式后添加新输入
+                inputFormula = "\(calculatorService.formatNumber(firstOperand)) \(operation) \(number)"
+            } else {
+                // 否则重置公式
+                inputFormula = number
+            }
             isStartingNewInput = false
         } else {
             // 如果当前显示为"0"且输入不是小数点，则替换显示内容
             if displayValue == "0" && number != "." {
                 displayValue = number
+                // 更新输入公式
+                if let firstOperand = firstOperand, let operation = currentOperation {
+                    inputFormula = "\(calculatorService.formatNumber(firstOperand)) \(operation) \(number)"
+                } else {
+                    inputFormula = number
+                }
             } else {
                 // 如果已经包含小数点且输入是小数点，则忽略
                 if number == "." && displayValue.contains(".") {
@@ -67,43 +83,72 @@ class CalculatorViewModel: ObservableObject {
                 
                 // 否则追加显示内容
                 displayValue += number
+                // 更新输入公式
+                if let firstOperand = firstOperand, let operation = currentOperation {
+                    // 如果有操作符，则更新第二个操作数
+                    let parts = inputFormula.components(separatedBy: " ")
+                    if parts.count >= 3 {
+                        inputFormula = "\(parts[0]) \(parts[1]) \(displayValue)"
+                    } else {
+                        inputFormula = "\(calculatorService.formatNumber(firstOperand)) \(operation) \(displayValue)"
+                    }
+                } else {
+                    // 否则直接更新公式
+                    inputFormula = displayValue
+                }
             }
         }
     }
     
     // 处理操作按钮
     func handleOperation(_ operation: String) {
+        // 如果已有操作符和两个操作数，先计算结果
+        if let firstOp = firstOperand, let op = currentOperation, !isStartingNewInput {
+            if let value = Double(displayValue) {
+                secondOperand = value
+                performCalculation()
+                // 更新公式历史(只显示计算公式，不显示结果)
+                formulaHistory = "\(calculatorService.formatNumber(firstOp)) \(op) \(calculatorService.formatNumber(value))"
+            }
+        }
+        
         // 保存当前操作
         currentOperation = operation
         
         // 将显示值转换为操作数
         if let value = Double(displayValue) {
-            if firstOperand == nil {
-                firstOperand = value
-            } else {
-                secondOperand = value
-                performCalculation()
-            }
+            firstOperand = value
         }
+        
+        // 更新输入公式
+        inputFormula = "\(calculatorService.formatNumber(firstOperand ?? 0)) \(operation)"
         
         isStartingNewInput = true
     }
     
     // 处理等号按钮
     func handleEqual() {
-        if let firstOperand = firstOperand, let currentOperation = currentOperation {
+        if let firstOp = firstOperand, let currentOp = currentOperation {
             if secondOperand == nil {
                 if let value = Double(displayValue) {
                     secondOperand = value
                 }
             }
             
+            // 在计算前保存完整表达式
+            let expression = "\(calculatorService.formatNumber(firstOp)) \(currentOp) \(calculatorService.formatNumber(secondOperand ?? Double(displayValue) ?? 0))"
+            
             performCalculation()
             
+            // 更新公式历史(只显示计算公式，不显示结果)
+            formulaHistory = expression
+            
             // 保存计算历史
-            let expression = "\(calculatorService.formatNumber(firstOperand)) \(currentOperation) \(calculatorService.formatNumber(secondOperand ?? 0))"
             calculatorService.saveCalculationHistory(expression: expression, result: displayValue)
             loadCalculationHistory()
+            
+            // 清空输入公式，因为计算已完成
+            inputFormula = ""
             
             // 重置状态，准备新的计算
             self.firstOperand = lastResult
@@ -134,6 +179,8 @@ class CalculatorViewModel: ObservableObject {
     // 处理清除按钮
     func handleClear() {
         displayValue = "0"
+        inputFormula = ""
+        formulaHistory = ""
         firstOperand = nil
         secondOperand = nil
         currentOperation = nil
@@ -144,6 +191,16 @@ class CalculatorViewModel: ObservableObject {
     func handleToggleSign() {
         if let value = Double(displayValue) {
             displayValue = calculatorService.formatNumber(-value)
+            
+            // 更新输入公式
+            if let firstOperand = firstOperand, let operation = currentOperation {
+                let parts = inputFormula.components(separatedBy: " ")
+                if parts.count >= 3 {
+                    inputFormula = "\(parts[0]) \(parts[1]) \(displayValue)"
+                }
+            } else {
+                inputFormula = displayValue
+            }
         }
     }
     
@@ -151,6 +208,16 @@ class CalculatorViewModel: ObservableObject {
     func handlePercentage() {
         if let value = Double(displayValue) {
             displayValue = calculatorService.formatNumber(value / 100)
+            
+            // 更新输入公式
+            if let firstOperand = firstOperand, let operation = currentOperation {
+                let parts = inputFormula.components(separatedBy: " ")
+                if parts.count >= 3 {
+                    inputFormula = "\(parts[0]) \(parts[1]) \(displayValue)"
+                }
+            } else {
+                inputFormula = displayValue
+            }
         }
     }
     
@@ -164,6 +231,24 @@ class CalculatorViewModel: ObservableObject {
             if !isInRadianMode && (function == "sin" || function == "cos" || function == "tan") {
                 // 将角度转换为弧度
                 inputValue = value * .pi / 180
+            }
+            
+            // 更新公式历史(使用正确的上标符号)
+            switch function {
+            case "x²":
+                formulaHistory = "\(calculatorService.formatNumber(value))²"
+            case "x³":
+                formulaHistory = "\(calculatorService.formatNumber(value))³"
+            case "10ˣ":
+                formulaHistory = "10ˣ(\(calculatorService.formatNumber(value)))"
+            case "eˣ":
+                formulaHistory = "eˣ(\(calculatorService.formatNumber(value)))"
+            case "xʸ":
+                formulaHistory = "\(calculatorService.formatNumber(value))ʸ"
+            case "∛":
+                formulaHistory = "∛\(calculatorService.formatNumber(value))"
+            default:
+                formulaHistory = "\(function)(\(calculatorService.formatNumber(value)))"
             }
             
             let result: Double
@@ -183,6 +268,8 @@ class CalculatorViewModel: ObservableObject {
             }
             
             displayValue = calculatorService.formatNumber(result)
+            inputFormula = ""
+            
             lastResult = result
             isStartingNewInput = true
         }

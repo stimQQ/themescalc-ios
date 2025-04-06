@@ -138,5 +138,4 @@ struct BasicCalculatorButtonsView: View {
 #Preview {
     BasicCalculatorButtonsView(viewModel: CalculatorViewModel())
         .environmentObject(AppViewModel.shared)
-        .previewLayout(.sizeThatFits)
 } 

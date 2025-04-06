@@ -1,6 +1,7 @@
 import SwiftUI
 
-struct ThemedCalculatorButton: View {
+/// 自定义主题按钮，与ThemedCalculatorButton类似，但不显示文字
+struct CustomThemedButton: View {
     // 环境对象
     @EnvironmentObject private var appViewModel: AppViewModel
     
@@ -8,6 +9,7 @@ struct ThemedCalculatorButton: View {
     let buttonType: ButtonType
     let action: () -> Void
     var calculatorMode: CalculatorMode = .basic
+    let customText: String
     
     // 状态变量
     @State private var isPressed = false
@@ -32,8 +34,8 @@ struct ThemedCalculatorButton: View {
                     // 按钮背景
                     buttonBackground
                     
-                    // 按钮文本
-                    Text(buttonType.rawValue)
+                    // 自定义按钮文本
+                    Text(customText)
                         .font(.system(size: buttonFontSize))
                         .fontWeight(.medium)
                         .foregroundColor(buttonTextColor)
@@ -80,20 +82,11 @@ struct ThemedCalculatorButton: View {
     
     // 判断是否为科学计算器按钮
     private var isScientificButton: Bool {
-        // TYPE_E类型的按钮或科学计算器模式下的特定按钮
+        // 科学计算器模式下的特定按钮
         return calculatorMode == .scientific && (
-            buttonType == .sin ||
-            buttonType == .cos ||
-            buttonType == .tan ||
-            buttonType == .ln ||
-            buttonType == .log ||
-            buttonType == .reciprocal ||
             buttonType == .power ||
             buttonType == .sqrt ||
-            buttonType == .factorial ||
             buttonType == .exp ||
-            buttonType == .pi ||
-            buttonType == .e ||
             buttonType == .secondFunction ||
             buttonType == .leftParenthesis
         )
@@ -159,27 +152,14 @@ struct ThemedCalculatorButton: View {
     }
 }
 
-// 自定义按钮样式，处理按下和释放状态
-struct CalculatorButtonStyle: ButtonStyle {
-    let onPress: () -> Void
-    let onRelease: () -> Void
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .onChange(of: configuration.isPressed) { oldValue, newValue in
-                if newValue {
-                    onPress()
-                } else {
-                    onRelease()
-                }
-            }
+// 条件修饰符扩展，用于条件性地应用视图修饰符
+extension View {
+    @ViewBuilder
+    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
-}
-
-#Preview {
-    ThemedCalculatorButton(buttonType: .one) {
-        print("Button pressed")
-    }
-    .frame(width: 80, height: 80)
-    .environmentObject(AppViewModel.shared)
 } 

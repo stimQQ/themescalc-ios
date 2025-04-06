@@ -221,5 +221,4 @@ struct ThemedTabBar: View {
 #Preview {
     ThemedTabBar(selectedTab: .constant(0))
         .environmentObject(AppViewModel.shared)
-        .previewLayout(.sizeThatFits)
 } 
