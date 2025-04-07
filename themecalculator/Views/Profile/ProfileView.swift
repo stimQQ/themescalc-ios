@@ -4,12 +4,19 @@ struct ProfileView: View {
     @EnvironmentObject private var appViewModel: AppViewModel
     @StateObject private var viewModel = ProfileViewModel()
     
+    private let themeUtils = ThemeUtils.shared
+    
     var body: some View {
         ThemedBackgroundView {
             ScrollView {
                 VStack(spacing: 20) {
                     // 用户信息卡片
                     userProfileCard
+                    
+                    // 订阅推广区域
+                    if !viewModel.isSubscribed {
+                        subscriptionPromotionCard
+                    }
                     
                     // 功能列表
                     functionList
@@ -30,55 +37,109 @@ struct ProfileView: View {
     
     // 用户信息卡片
     private var userProfileCard: some View {
-        VStack(spacing: 12) {
-            // 用户头像
+        HStack(spacing: 16) {
+            // 用户信息（左侧）
+            VStack(alignment: .leading, spacing: 8) {
+                // 用户名
+                Text(viewModel.username)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                // 邮箱（如果有）
+                if let email = viewModel.email {
+                    Text(email)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                // 订阅状态
+                if viewModel.isSubscribed {
+                    HStack {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(primaryThemeColor)
+                        
+                        Text("已订阅 - 到期日: \(viewModel.formatExpiryDate())")
+                            .font(.subheadline)
+                            .foregroundColor(primaryThemeColor)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+            
+            Spacer()
+            
+            // 用户头像（右侧）
             Image(systemName: "person.circle.fill")
                 .font(.system(size: 70))
-                .foregroundColor(.blue)
-            
-            // 用户名
-            Text(viewModel.username)
-                .font(.title)
-                .fontWeight(.bold)
-            
-            // 邮箱（如果有）
-            if let email = viewModel.email {
-                Text(email)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            // 订阅状态
-            if viewModel.isSubscribed {
-                HStack {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(.green)
-                    
-                    Text("已订阅 - 到期日: \(viewModel.formatExpiryDate())")
-                        .font(.subheadline)
-                        .foregroundColor(.green)
-                }
-                .padding(.top, 4)
-            } else {
-                Button(action: {
-                    // 跳转到订阅页面
-                }) {
-                    Text("立即订阅解锁所有主题")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                }
-                .padding(.top, 8)
-            }
+                .foregroundColor(primaryThemeColor)
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color(.secondarySystemBackground).opacity(0.7))
         )
+    }
+    
+    // 新增：订阅推广卡片
+    private var subscriptionPromotionCard: some View {
+        VStack(spacing: 16) {
+            // 标题
+            Text("解锁完整计算体验")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // 推广内容
+            VStack(alignment: .leading, spacing: 12) {
+                promotionFeature(icon: "paintpalette.fill", text: "解锁所有精美主题，让计算更有趣")
+                promotionFeature(icon: "clock.fill", text: "无限历史记录，随时查看过往计算")
+                promotionFeature(icon: "function", text: "高级计算功能，满足专业需求")
+                promotionFeature(icon: "icloud.fill", text: "多设备同步，随时随地使用")
+            }
+            
+            // 立即订阅按钮
+            Button(action: {
+                // 跳转到订阅页面
+            }) {
+                HStack {
+                    Text("立即订阅 每月仅需 ¥18")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Image(systemName: "arrow.right")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(primaryThemeColor)
+                .cornerRadius(30)
+            }
+            .padding(.top, 8)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground).opacity(0.7))
+                .shadow(color: primaryThemeColor.opacity(0.2), radius: 10, x: 0, y: 5)
+        )
+    }
+    
+    // 推广功能项
+    private func promotionFeature(icon: String, text: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundColor(primaryThemeColor)
+                .frame(width: 24, height: 24)
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+            
+            Spacer()
+        }
     }
     
     // 功能列表
@@ -129,7 +190,7 @@ struct ProfileView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+                    .fill(Color(.secondarySystemBackground).opacity(0.7))
             )
         }
     }
@@ -152,7 +213,7 @@ struct ProfileView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.secondarySystemBackground))
+                            .fill(Color(.secondarySystemBackground).opacity(0.7))
                     )
             } else {
                 VStack(spacing: 0) {
@@ -181,7 +242,7 @@ struct ProfileView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.secondarySystemBackground))
+                        .fill(Color(.secondarySystemBackground).opacity(0.7))
                 )
             }
         }
@@ -227,7 +288,7 @@ struct ProfileView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+                    .fill(Color(.secondarySystemBackground).opacity(0.7))
             )
         }
     }
@@ -239,7 +300,7 @@ struct ProfileView: View {
                 Image(systemName: icon)
                     .font(.system(size: 18))
                     .frame(width: 26, height: 26)
-                    .foregroundColor(.blue)
+                    .foregroundColor(primaryThemeColor)
                 
                 Text(title)
                     .font(.body)
@@ -254,6 +315,14 @@ struct ProfileView: View {
             .padding(.horizontal, 16)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    // 获取当前主题的主要颜色（使用主题顶部按钮选中颜色）
+    private var primaryThemeColor: Color {
+        if let theme = appViewModel.currentTheme {
+            return themeUtils.color(from: theme.topButtonSelectedColor, defaultColor: Color.blue)
+        }
+        return Color.blue // 默认颜色
     }
     
     // 格式化日期

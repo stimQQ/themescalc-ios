@@ -57,7 +57,7 @@ struct ThemedTabBar: View {
             .background(tabBarBackground)
         }
         .onAppear(perform: loadTabBarAssets)
-        .onChange(of: appViewModel.currentTheme) { _ in
+        .onChange(of: appViewModel.currentTheme) { oldValue, newValue in
             loadTabBarAssets()
         }
     }

@@ -27,11 +27,11 @@ struct MainView: View {
             // 底部标签栏
             ThemedTabBar(selectedTab: $selectedTab)
         }
-        .onChange(of: selectedTab) { newTab in
-            appViewModel.currentTab = newTab
+        .onChange(of: selectedTab) { oldValue, newValue in
+            appViewModel.currentTab = newValue
         }
-        .onChange(of: appViewModel.currentTab) { newTab in
-            selectedTab = newTab
+        .onChange(of: appViewModel.currentTab) { oldValue, newValue in
+            selectedTab = newValue
         }
     }
 }

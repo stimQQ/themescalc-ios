@@ -26,9 +26,9 @@ struct ThemedButtonStyle: ButtonStyle {
                 }
             )
             .foregroundColor(buttonTextColor)
-            .onChange(of: configuration.isPressed) { isPressed in
-                self.isPressed = isPressed
-                if isPressed {
+            .onChange(of: configuration.isPressed) { oldValue, newValue in
+                self.isPressed = newValue
+                if newValue {
                     // 播放按钮音效
                     if let theme = themeModel,
                        let buttonTheme = themeUtils.getButtonTheme(for: buttonType, from: theme, calculatorMode: calculatorMode) {

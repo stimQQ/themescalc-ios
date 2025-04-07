@@ -105,7 +105,7 @@ class UserService {
             let _ = networkService.post(endpoint: "auth/languages", body: UpdateLanguageRequest(language: language.rawValue))
                 .sink(
                     receiveCompletion: { (completion: Subscribers.Completion<NetworkError>) in },
-                    receiveValue: { (response: EmptyResponse) in }
+                    receiveValue: { (_: EmptyResponse) in }
                 )
                 .store(in: &cancellables)
         }

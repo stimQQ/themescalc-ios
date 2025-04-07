@@ -54,7 +54,7 @@ struct ScientificCalculatorButtonsView: View {
             .onAppear {
                 loadAllButtonImages()
             }
-            .onChange(of: appViewModel.currentTheme) { _ in
+            .onChange(of: appViewModel.currentTheme) { oldValue, newValue in
                 loadAllButtonImages()
             }
         }

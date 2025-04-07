@@ -22,7 +22,7 @@ struct ThemedBackgroundView<Content: View>: View {
         GeometryReader { geometry in
             Group {
                 if let theme = appViewModel.currentTheme {
-                    if theme.hasGlobalBackgroundImage, let imageUrlString = theme.globalBackgroundImage {
+                    if theme.hasGlobalBackgroundImage, let imageUrlString = theme.globalBackgroundImage, !imageUrlString.isEmpty {
                         CachedAsyncImage(url: URL(string: imageUrlString)) { phase in
                             switch phase {
                             case .success(let image):
@@ -51,8 +51,8 @@ struct ThemedBackgroundView<Content: View>: View {
     }
     
     private func fallbackBackgroundColor(theme: ThemeModel) -> some View {
-        ThemeUtils.shared.color(from: theme.globalBackgroundColor, defaultColor: Color(.systemBackground))
-            .ignoresSafeArea()
+        let backgroundColor = ThemeUtils.shared.color(from: theme.globalBackgroundColor, defaultColor: Color(.systemBackground))
+        return backgroundColor.ignoresSafeArea()
     }
 }
 

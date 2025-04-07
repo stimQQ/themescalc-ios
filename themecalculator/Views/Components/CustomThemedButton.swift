@@ -49,7 +49,7 @@ struct CustomThemedButton: View {
         }
         .buttonStyle(CalculatorButtonStyle(onPress: { isPressed = true }, onRelease: { isPressed = false }))
         .onAppear(perform: loadImages)
-        .onChange(of: appViewModel.currentTheme) { _, _ in
+        .onChange(of: appViewModel.currentTheme) { oldValue, newValue in
             loadImages()
         }
     }

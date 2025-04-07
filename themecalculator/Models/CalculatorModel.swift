@@ -140,7 +140,7 @@ struct CalculationHistoryItem: Identifiable, Codable {
     // 自定义解码方法
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        _ = try container.decode(String.self, forKey: .id)
+        let _ = try container.decode(String.self, forKey: .id)
         
         let expression = try container.decode(String.self, forKey: .expression)
         let result = try container.decode(String.self, forKey: .result)
