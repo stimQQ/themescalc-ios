@@ -23,7 +23,7 @@ struct ThemedBackgroundView<Content: View>: View {
             Group {
                 if let theme = appViewModel.currentTheme {
                     if theme.hasGlobalBackgroundImage, let imageUrlString = theme.globalBackgroundImage {
-                        AsyncImage(url: URL(string: imageUrlString)) { phase in
+                        CachedAsyncImage(url: URL(string: imageUrlString)) { phase in
                             switch phase {
                             case .success(let image):
                                 image

@@ -99,8 +99,11 @@ struct ThemeGrid: View {
     let themes: [ThemeListItem]
     @ObservedObject var viewModel: ThemeViewModel
     
+    // 修改为固定的3列布局
     private let columns = [
-        GridItem(.adaptive(minimum: 150), spacing: 16)
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
     ]
     
     var body: some View {
@@ -124,36 +127,40 @@ struct ThemeGridItem: View {
     var body: some View {
         Button(action: onSelect) {
             VStack(spacing: 8) {
-                // 主题预览图
-                AsyncImage(url: URL(string: theme.detailImage)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(height: 160)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                            )
-                    case .failure:
-                        Color.gray
-                            .frame(height: 160)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                            )
-                    case .empty:
-                        ProgressView()
-                            .frame(height: 160)
-                    @unknown default:
-                        Color.gray
-                            .frame(height: 160)
-                            .cornerRadius(12)
+                // 主题预览图，设置宽高比为9:16
+                GeometryReader { geo in
+                    CachedAsyncImage(url: URL(string: theme.detailImage)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geo.size.width, height: geo.size.width * 16/9)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                                )
+                                .clipped()
+                        case .failure:
+                            Color.gray
+                                .frame(width: geo.size.width, height: geo.size.width * 16/9)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                                )
+                        case .empty:
+                            ProgressView()
+                                .frame(width: geo.size.width, height: geo.size.width * 16/9)
+                        @unknown default:
+                            Color.gray
+                                .frame(width: geo.size.width, height: geo.size.width * 16/9)
+                                .cornerRadius(12)
+                        }
                     }
                 }
+                .aspectRatio(9/16, contentMode: .fit) // 设置容器的宽高比为9:16
                 
                 // 主题名称
                 Text(theme.name)

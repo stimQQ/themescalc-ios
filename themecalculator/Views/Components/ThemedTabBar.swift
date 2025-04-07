@@ -64,27 +64,34 @@ struct ThemedTabBar: View {
     
     private func tabButton(selectedImage: UIImage?, unselectedImage: UIImage?, title: String, iconName: String, tab: Int) -> some View {
         Button(action: {
-            withAnimation {
+            // 使用更快的动画效果
+            withAnimation(.easeOut(duration: 0.15)) {
                 selectedTab = tab
             }
         }) {
             VStack(spacing: 4) {
-                // 图标
-                Group {
-                    if selectedTab == tab, let image = selectedImage {
-                        // 使用选中状态的自定义图片
+                // 图标 - 始终显示所有状态，使用opacity控制可见性，避免灰色过渡
+                ZStack {
+                    // 选中状态图标
+                    if let image = selectedImage {
                         Image(uiImage: image)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 24)
-                    } else if let image = unselectedImage {
-                        // 使用未选中状态的自定义图片
+                            .opacity(selectedTab == tab ? 1 : 0)
+                    }
+                    
+                    // 未选中状态图标
+                    if let image = unselectedImage {
                         Image(uiImage: image)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 24)
-                    } else {
-                        // 回退到系统图标
+                            .opacity(selectedTab == tab ? 0 : 1)
+                    }
+                    
+                    // 回退到系统图标
+                    if selectedImage == nil && unselectedImage == nil {
                         Image(systemName: iconName)
                             .font(.system(size: 20))
                             .foregroundColor(tabTextColor(isSelected: selectedTab == tab))

@@ -15,7 +15,9 @@ class CalculatorService {
     // 设置音频会话
     private func setupAudioSession() {
         do {
-            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
+            // 修改音频会话类别为playback，以确保在静音状态下也能播放
+            // 添加.mixWithOthers选项，使音效可以和其他音频混合播放
+            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers, .duckOthers])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Failed to set up audio session: \(error)")
@@ -29,8 +31,19 @@ class CalculatorService {
             return
         }
         
+        // 确保音频会话是激活的
+        do {
+            if !AVAudioSession.sharedInstance().isOtherAudioPlaying {
+                try AVAudioSession.sharedInstance().setActive(true)
+            }
+        } catch {
+            print("Failed to activate audio session: \(error)")
+        }
+        
         // 检查是否已经缓存了这个URL的音频播放器
         if let player = audioPlayers[url] {
+            // 确保每次播放从头开始，避免播放器已到结尾的问题
+            player.currentTime = 0
             player.play()
             return
         }
@@ -44,9 +57,17 @@ class CalculatorService {
             
             do {
                 let player = try AVAudioPlayer(data: data)
+                // 设置播放器属性
+                player.volume = 1.0
+                player.numberOfLoops = 0
+                
                 self?.audioPlayers[url] = player
                 player.prepareToPlay()
-                player.play()
+                
+                // 在主线程播放音频，避免线程安全问题
+                DispatchQueue.main.async {
+                    player.play()
+                }
             } catch {
                 print("Failed to create audio player: \(error)")
             }

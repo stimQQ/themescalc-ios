@@ -1,5 +1,78 @@
 import SwiftUI
 
+// 自定义带缓存的异步图片组件
+struct CachedAsyncImage<Content: View>: View {
+    private let url: URL?
+    private let scale: CGFloat
+    private let transaction: Transaction
+    private let content: (AsyncImagePhase) -> Content
+    
+    init(
+        url: URL?,
+        scale: CGFloat = 1.0,
+        transaction: Transaction = Transaction(),
+        @ViewBuilder content: @escaping (AsyncImagePhase) -> Content
+    ) {
+        self.url = url
+        self.scale = scale
+        self.transaction = transaction
+        self.content = content
+    }
+    
+    var body: some View {
+        if let urlString = url?.absoluteString {
+            CachedAsyncImageInternal(
+                urlString: urlString,
+                scale: scale,
+                transaction: transaction,
+                content: content
+            )
+        } else {
+            content(.empty)
+        }
+    }
+}
+
+// 内部组件，负责实际的缓存和图片加载逻辑
+private struct CachedAsyncImageInternal<Content: View>: View {
+    @State private var phase: AsyncImagePhase = .empty
+    
+    private let urlString: String
+    private let scale: CGFloat
+    private let transaction: Transaction
+    private let content: (AsyncImagePhase) -> Content
+    private let themeUtils = ThemeUtils.shared
+    
+    init(
+        urlString: String,
+        scale: CGFloat = 1.0,
+        transaction: Transaction = Transaction(),
+        @ViewBuilder content: @escaping (AsyncImagePhase) -> Content
+    ) {
+        self.urlString = urlString
+        self.scale = scale
+        self.transaction = transaction
+        self.content = content
+    }
+    
+    var body: some View {
+        content(phase)
+            .onAppear {
+                loadImage()
+            }
+    }
+    
+    private func loadImage() {
+        themeUtils.loadImage(from: urlString) { image in
+            if let image = image {
+                phase = .success(Image(uiImage: image))
+            } else {
+                phase = .failure(NSError(domain: "CachedAsyncImage", code: -1, userInfo: nil))
+            }
+        }
+    }
+}
+
 struct CalculatorView: View {
     @EnvironmentObject private var appViewModel: AppViewModel
     @StateObject private var viewModel = CalculatorViewModel()
@@ -102,7 +175,8 @@ struct CalculatorView: View {
             if let theme = appViewModel.currentTheme,
                theme.resultUseImage,
                let imageUrlString = theme.resultBackgroundImage {
-                AsyncImage(url: URL(string: imageUrlString)) { phase in
+                // 使用自定义缓存图片组件替代AsyncImage
+                CachedAsyncImage(url: URL(string: imageUrlString)) { phase in
                     switch phase {
                     case .success(let image):
                         image
@@ -164,7 +238,8 @@ struct CalculatorView: View {
             if let theme = appViewModel.currentTheme {
                 if theme.topButtonUseImage, 
                    let imageUrl = viewModel.currentMode == mode ? theme.topButtonSelectedImage : theme.topButtonUnselectedImage {
-                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                    // 同样为模式切换按钮也使用缓存图片
+                    CachedAsyncImage(url: URL(string: imageUrl)) { phase in
                         switch phase {
                         case .success(let image):
                             image.resizable().aspectRatio(contentMode: .fill)
