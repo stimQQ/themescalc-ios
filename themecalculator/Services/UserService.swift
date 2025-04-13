@@ -97,7 +97,7 @@ class UserService {
         }
         
         // 如果是已认证用户，还需要调用API更新语言偏好
-        if userType == .authenticated, let token = authToken {
+        if userType == .authenticated, let _ = authToken {
             struct UpdateLanguageRequest: Codable {
                 let language: String
             }

@@ -27,6 +27,7 @@ struct MainView: View {
             // 底部标签栏
             ThemedTabBar(selectedTab: $selectedTab)
         }
+        .preferredColorScheme(.light) // 强制使用浅色模式，忽略系统深色模式设置
         .onChange(of: selectedTab) { oldValue, newValue in
             appViewModel.currentTab = newValue
         }

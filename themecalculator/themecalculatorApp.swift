@@ -20,6 +20,7 @@ struct themecalculatorApp: App {
         WindowGroup {
             contentView
                 .environmentObject(appViewModel)
+                .preferredColorScheme(.light) // 强制应用使用浅色模式，忽略系统深色模式设置
                 .onAppear {
                     // 设置方向锁定为竖屏
                     UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")

@@ -147,14 +147,27 @@ class CalculatorService {
     func formatNumber(_ number: Double) -> String {
         let formatter = NumberFormatter()
         formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 10
+        formatter.maximumFractionDigits = 15 // 增加小数位数精度从10位提高到15位
         formatter.numberStyle = .decimal
         
+        // 处理特殊情况
         if number.isNaN {
             return "错误"
         } else if number.isInfinite {
             return number > 0 ? "∞" : "-∞"
+        }
+        
+        // 检查数字是否非常大或非常小，使用科学计数法
+        let absNumber = abs(number)
+        if absNumber > 0 && (absNumber < 0.0000001 || absNumber > 10000000000.0) {
+            // 使用科学计数法
+            let scientificFormatter = NumberFormatter()
+            scientificFormatter.numberStyle = .scientific
+            scientificFormatter.maximumFractionDigits = 10
+            scientificFormatter.exponentSymbol = "e" // 使用小写e作为指数符号
+            return scientificFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
         } else {
+            // 常规格式
             return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
         }
     }

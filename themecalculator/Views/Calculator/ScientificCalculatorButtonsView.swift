@@ -38,8 +38,8 @@ struct ScientificCalculatorButtonsView: View {
             let typeEButtonHeight: CGFloat = min(typeEButtonWidth * 0.9, 42) // 增加科学计算按钮高度
             let normalButtonHeight: CGFloat = min(normalButtonWidth * 0.8, 55) // 降低标准按钮高度
             
-            // 使用ScrollView确保在小屏幕上内容可滚动，避免堆叠
-            ScrollView {
+            // 移除ScrollView，改用VStack以固定按钮布局
+            VStack {
                 VStack(spacing: sectionSpacing) { // 使用20pt的区域间间距
                     // 使用明确的VStack结构来确保typeE按钮的垂直间距生效
                     scientificButtonsArea(typeEButtonWidth: typeEButtonWidth, typeEButtonHeight: typeEButtonHeight)
@@ -63,7 +63,7 @@ struct ScientificCalculatorButtonsView: View {
     // 科学计算器专用按钮区域
     private func scientificButtonsArea(typeEButtonWidth: CGFloat, typeEButtonHeight: CGFloat) -> some View {
         // 使用明确的VStack和固定的spacing来确保垂直间距正确应用
-        VStack(spacing: 0) {
+        VStack(spacing: 12) { // 设置统一的行间距为8pt
             // 第一行：sin, cos, tan, ln, log, 1/x
             HStack(spacing: typeEButtonSpacing) {
                 calculatorButton(.sin) {
@@ -97,8 +97,6 @@ struct ScientificCalculatorButtonsView: View {
                 .frame(width: typeEButtonWidth, height: typeEButtonHeight)
             }
             
-            // 明确设置行间距为6pt
-            Spacer().frame(height: typeEVerticalSpacing)
             
             // 第二行：x², x³, x^y, √, ∛, x!
             HStack(spacing: typeEButtonSpacing) {
@@ -148,8 +146,7 @@ struct ScientificCalculatorButtonsView: View {
                 .frame(width: typeEButtonWidth, height: typeEButtonHeight)
             }
             
-            // 明确设置行间距为6pt
-            Spacer().frame(height: typeEVerticalSpacing)
+       
             
             // 第三行：e^x, 10^x, π, e, Ans, ()
             HStack(spacing: typeEButtonSpacing) {
@@ -194,7 +191,7 @@ struct ScientificCalculatorButtonsView: View {
                 CustomThemedButton(
                     buttonType: .leftParenthesis,
                     action: {
-                        // 括号功能实现较复杂，暂不实现
+                        viewModel.handleParenthesis()
                     },
                     calculatorMode: .scientific,
                     customText: "()"

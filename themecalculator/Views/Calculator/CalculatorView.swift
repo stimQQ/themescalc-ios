@@ -143,11 +143,10 @@ struct CalculatorView: View {
                     
                     // 当前输入公式
                     if !viewModel.inputFormula.isEmpty {
-                        Text(viewModel.inputFormula)
-                            .font(.system(size: resultFontSize * 0.7))
-                            .foregroundColor(resultTextColor.opacity(0.9))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
+                        FormattedFormulaText(formula: viewModel.inputFormula, 
+                                             textColor: resultTextColor.opacity(0.9),
+                                             fontSize: resultFontSize * 0.7,
+                                             primaryThemeColor: primaryThemeColor)
                     }
                     
                     // 显示结果
@@ -156,7 +155,8 @@ struct CalculatorView: View {
                         .fontWeight(.medium)
                         .foregroundColor(resultTextColor)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.5)
+                        .minimumScaleFactor(0.3)
+                        .allowsTightening(true)
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 10)
@@ -166,7 +166,15 @@ struct CalculatorView: View {
         }
         .frame(width: UIScreen.main.bounds.width - 40) // 确保宽度为屏幕宽度减去左右各20pt的边距
         .padding(.vertical, 5)
-        .padding(.bottom, viewModel.isInScientificMode ? 20 : 10) // 科学计算器模式使用20pt间距，基础计算器模式使用10pt间距（减半）
+        .padding(.bottom, viewModel.isInScientificMode ? 10 : 10) // 将科学计算器模式的间距从20pt减小为10pt
+    }
+    
+    // 获取当前主题的主要颜色（用于括号高亮）
+    private var primaryThemeColor: Color {
+        if let theme = appViewModel.currentTheme {
+            return themeUtils.color(from: theme.topButtonSelectedColor, defaultColor: .blue)
+        }
+        return .blue // 默认颜色
     }
     
     // 结果背景
@@ -272,4 +280,83 @@ struct CalculatorView: View {
 #Preview {
     CalculatorView()
         .environmentObject(AppViewModel.shared)
+}
+
+// 自定义视图：带括号高亮的公式文本
+struct FormattedFormulaText: View {
+    let formula: String
+    let textColor: Color
+    let fontSize: CGFloat
+    let primaryThemeColor: Color
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(getFormattedSegments(), id: \.id) { segment in
+                Text(segment.text)
+                    .foregroundColor(textColor) // 所有文本使用相同颜色，不再使用高亮色
+                    .font(.system(size: fontSize))
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
+    }
+    
+    // 获取分段后的公式文本，保持分段结构但不再使用颜色区分
+    private func getFormattedSegments() -> [FormulaSegment] {
+        var segments: [FormulaSegment] = []
+        var currentText = ""
+        var bracketDepth = 0
+        
+        // 遍历公式字符串
+        for (index, char) in formula.enumerated() {
+            if char == "(" {
+                // 如果之前有文本，先添加为一个段
+                if !currentText.isEmpty {
+                    segments.append(FormulaSegment(text: currentText, isHighlighted: false, bracketLevel: bracketDepth))
+                    currentText = ""
+                }
+                
+                // 左括号单独作为一个段
+                bracketDepth += 1
+                segments.append(FormulaSegment(text: String(char), isHighlighted: false, bracketLevel: bracketDepth - 1))
+                
+                continue
+            } else if char == ")" {
+                // 如果之前有文本，先添加为一个段
+                if !currentText.isEmpty {
+                    segments.append(FormulaSegment(text: currentText, isHighlighted: false, bracketLevel: bracketDepth))
+                    currentText = ""
+                }
+                
+                // 右括号单独作为一个段
+                bracketDepth = max(0, bracketDepth - 1)
+                segments.append(FormulaSegment(text: String(char), isHighlighted: false, bracketLevel: bracketDepth))
+                
+                continue
+            }
+            
+            // 累积其他字符
+            currentText += String(char)
+        }
+        
+        // 添加最后剩余的文本
+        if !currentText.isEmpty {
+            segments.append(FormulaSegment(text: currentText, isHighlighted: false, bracketLevel: bracketDepth))
+        }
+        
+        return segments
+    }
+    
+    // 原来用于根据段类型获取颜色的方法，现在简化为始终返回textColor
+    private func getColorForSegment(_ segment: FormulaSegment) -> Color {
+        return textColor
+    }
+}
+
+// 公式段数据模型
+struct FormulaSegment: Identifiable {
+    let id = UUID()
+    let text: String
+    let isHighlighted: Bool
+    let bracketLevel: Int
 } 
